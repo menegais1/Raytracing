@@ -8,12 +8,16 @@
 #include "Libs/stb_image_write.h"
 
 #define byte unsigned char
+#define PI 3.145
 std::string OUTPUT_PATH = "../Output/";
-
 
 struct Ray {
     glm::dvec3 origin;
     glm::dvec3 direction;
+
+    Ray(glm::dvec3 origin, glm::dvec3 direction) : origin(origin), direction(direction) {
+
+    }
 };
 
 struct Sphere {
@@ -51,8 +55,8 @@ bool raySphereIntersection(Ray ray, Sphere s, glm::dvec3 &point) {
 }
 
 struct Image {
-    int width = 100;
-    int height = 100;
+    int width = 1920;
+    int height = 1080;
     int channels = 3;
     byte *data = new byte[width * height * channels];
 
@@ -71,9 +75,23 @@ struct Image {
 
 int main() {
     Image output;
+    double fieldOfView = 90;
+    double focalLength = 1;
+    double aspectRatio = output.width /  (float)output.height;
+    Sphere s = {glm::dvec3(0,0,-4),2};
     for (int y = 0; y < output.height; ++y) {
         for (int x = 0; x < output.width; ++x) {
-            output.pixel(x, y, glm::dvec3(255, 0, 0));
+            // Convert the raster coordinates to [-1,1] range considering the aspect ratio and invert the Y coordinate
+            glm::dvec2 screenCoord = glm::vec2((((x + 0.5) / output.width) * 2) - 1, (((output.height - y + 0.5) / output.height) * 2) - 1);
+            // Consider the camera field of view and focal length/distance
+            glm::dvec2 cameraCoord = screenCoord * tan(focalLength * (fieldOfView / 2.0) * (PI / 180));
+            Ray r = Ray(glm::dvec3(0,0,0),glm::normalize(glm::dvec3(cameraCoord.x * aspectRatio, cameraCoord.y, -1)));
+            glm::dvec3 intersection;
+            if(raySphereIntersection(r,s,intersection)){
+                output.pixel(x, y, glm::dvec3(255, 0, 0));
+            }else{
+                output.pixel(x, y, glm::dvec3(0, 0, 255));
+            }
         }
     }
     output.write(OUTPUT_PATH + "teste.png");
