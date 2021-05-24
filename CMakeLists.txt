@@ -3,4 +3,5 @@ project(RayTracingBase)
 
 set(CMAKE_CXX_STANDARD 17)
 
+ADD_SUBDIRECTORY(Libs/glm)
 add_executable(RayTracingBase main.cpp)
